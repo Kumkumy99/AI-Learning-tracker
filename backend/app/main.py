@@ -2,6 +2,7 @@ from fastapi import FastAPI,Depends,HTTPException
 from . import models
 from sqlalchemy.orm import Session
 from .database import engine, get_db
+from .routers import goals
 models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 app.include_router(goals.router)
