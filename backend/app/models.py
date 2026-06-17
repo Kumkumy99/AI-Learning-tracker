@@ -6,6 +6,7 @@ class Goal(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     completed = Column(Boolean, default=False)
+    
 class User(Base):
     __tablename__="users"
     id = Column(Integer, primary_key=True, index=True)
