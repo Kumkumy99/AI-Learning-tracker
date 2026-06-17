@@ -51,3 +51,22 @@ def update_goal(
     db.commit()
     db.refresh(goal)
     return goal
+@router.delete("/{goal_id}")
+def delete_goal(
+    goal_id: int,
+    db: Session = Depends(get_db)
+):
+    goal = db.query(models.Goal).filter(
+        models.Goal.id == goal_id
+    ).first()
+
+    if goal is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Goal not found"
+        )
+
+    db.delete(goal)
+    db.commit()
+
+    return {"message": "Goal deleted successfully"}
