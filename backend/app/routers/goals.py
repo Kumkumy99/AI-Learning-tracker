@@ -7,7 +7,6 @@ router = APIRouter(
     prefix="/goals",
     tags=["Goals"]
 )
-
 @router.post("/")
 def create_goal(
     goal: GoalCreate,
@@ -59,14 +58,11 @@ def delete_goal(
     goal = db.query(models.Goal).filter(
         models.Goal.id == goal_id
     ).first()
-
     if goal is None:
         raise HTTPException(
             status_code=404,
             detail="Goal not found"
         )
-
     db.delete(goal)
     db.commit()
-
     return {"message": "Goal deleted successfully"}
