@@ -31,3 +31,23 @@ def get_goal(goal_id: int, db: Session = Depends(get_db)):
     if goal is None:
         raise HTTPException(status_code=404, detail="Goal not found")
     return goal   
+@router.patch("/{goal_id}", response_model=schemas.GoalResponse)
+def update_goal(
+    goal_id: int,
+    update: schemas.GoalUpdate,
+    db: Session = Depends(get_db)
+):
+    goal = db.query(models.Goal).filter(
+    models.Goal.id == goal_id
+).first()
+    if goal is None:
+        raise HTTPException(
+        status_code=404,
+        detail="Goal not found"
+    )
+    update_data = update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(goal, field, value)
+    db.commit()
+    db.refresh(goal)
+    return goal
