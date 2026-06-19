@@ -1,22 +1,22 @@
 from fastapi import APIRouter,Depends,HTTPException
 from sqlalchemy.orm import Session
 from ..database import get_db
-from .. import models, schemas
+from .. models import User
 from ..schemas import UserCreate,UserResponse,UserLogin,Token
-from .. auth import hash_password
+from .. auth import hash_password,verify_password,create_access_token
 router = APIRouter(
     prefix="/users",
     tags=["Users"]
 )
-@router.post("/users", response_model=schemas.UserResponse)
+@router.post("/", response_model=UserResponse)
 def create_user(user:UserCreate, db: Session = Depends(get_db)):
-    existing_user = db.query(models.User).filter(
-        models.User.email == user.email
+    existing_user = db.query(User).filter(
+        User.email == user.email
     ).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     hashed_pw = hash_password(user.password)
-    new_user = models.User(
+    new_user = User(
         username=user.username,
         email=user.email,
         hashed_password=hashed_pw
@@ -26,3 +26,25 @@ def create_user(user:UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
     return new_user
+
+# app/routers/users.py
+
+@router.post("/login", response_model=Token)
+def login(user:UserLogin, db: Session = Depends(get_db)):
+
+    db_user = db.query(User).filter(
+        User.email == user.email
+    ).first()
+
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not verify_password(user.password, db_user.hashed_password):
+        raise HTTPException(status_code=401, detail="Incorrect password")
+
+    token = create_access_token(data={"sub": str(db_user.id)})
+
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }

@@ -1,5 +1,4 @@
 from sqlalchemy import Column, Integer, String, Boolean
-from typing import email
 from .database import Base
 class Goal(Base):
     __tablename__ = "goals"
