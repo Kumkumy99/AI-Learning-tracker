@@ -6,7 +6,6 @@ from .. models import User
 from ..schemas import UserCreate,UserResponse,UserLogin,Token
 from .. auth import hash_password,verify_password,create_access_token,get_current_user
 router = APIRouter(
-    prefix="/users",
     tags=["Users"]
 )
 @router.post("/", response_model=UserResponse)
@@ -31,7 +30,6 @@ def create_user(user:UserCreate, db: Session = Depends(get_db)):
 # app/routers/users.py
 
 @router.post("/login", response_model=Token)
-@router.post("/login", response_model=Token)
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
@@ -54,6 +52,6 @@ def login(
         "token_type": "bearer"
     }
 
-@router.get("/me")
+@router.get("/me",response_model=UserResponse)
 def read_me(current_user: User = Depends(get_current_user)):
     return current_user
