@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models, schemas
 from ..schemas import GoalCreate,GoalResponse
+from auth import get_current_user
 router = APIRouter(
     prefix="/goals",
     tags=["Goals"]
@@ -10,11 +11,13 @@ router = APIRouter(
 @router.post("/")
 def create_goal(
     goal: GoalCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
     db_goal = models.Goal(
         title=goal.title,
-        completed=goal.completed
+        completed=goal.completed,
+        owner_id=current_user.id
     )
     db.add(db_goal)
     db.commit()
