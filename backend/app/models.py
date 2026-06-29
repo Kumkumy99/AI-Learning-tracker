@@ -21,3 +21,25 @@ class User(Base):
     email=Column(String,nullable=False,unique=True,index=True)
     hashed_password=Column(String,nullable=False)
     role = Column(String, default="user")
+
+class Roadmap(Base):
+    __tablename__ = "roadmaps"
+    id = Column(Integer, primary_key=True, index=True)
+    goal_id = Column(Integer, ForeignKey("goals.id"), nullable=False)
+    phase_title = Column(String, nullable=False)
+    phase_order = Column(Integer, nullable=False)
+
+class Subtask(Base):
+    __tablename__ = "subtasks"
+    id = Column(Integer, primary_key=True, index=True)
+    roadmap_id = Column(Integer, ForeignKey("roadmaps.id"), nullable=False)
+    title = Column(String, nullable=False)
+    completed = Column(Boolean, default=False)
+
+class Resource(Base):
+    __tablename__ = "resources"
+    id = Column(Integer, primary_key=True, index=True)
+    subtask_id = Column(Integer, ForeignKey("subtasks.id"), nullable=False)
+    title = Column(String, nullable=False)
+    url = Column(String, nullable=False)
+    resource_type = Column(String, nullable=True)
