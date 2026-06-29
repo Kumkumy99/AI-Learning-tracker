@@ -4,6 +4,7 @@ from ..database import get_db
 from .. import models, schemas
 from ..schemas import GoalCreate,GoalResponse
 from auth import get_current_user
+from ..models import Goal
 router = APIRouter(
     prefix="/goals",
     tags=["Goals"]
@@ -32,40 +33,52 @@ def get_goal(goal_id: int, db: Session = Depends(get_db)):
     goal = db.query(models.Goal).filter(models.Goal.id == goal_id).first()
     if goal is None:
         raise HTTPException(status_code=404, detail="Goal not found")
-    return goal   
-@router.patch("/{goal_id}", response_model=schemas.GoalResponse)
+@router.patch("/{goal_id}")
 def update_goal(
     goal_id: int,
-    update: schemas.GoalUpdate,
-    db: Session = Depends(get_db)
+    goal_data: GoalUpdate,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
-    goal = db.query(models.Goal).filter(
-    models.Goal.id == goal_id
-).first()
-    if goal is None:
-        raise HTTPException(
-        status_code=404,
-        detail="Goal not found"
-    )
-    update_data = update.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(goal, field, value)
-    db.commit()
-    db.refresh(goal)
-    return goal
-@router.delete("/{goal_id}")
-def delete_goal(
-    goal_id: int,
-    db: Session = Depends(get_db)
-):
-    goal = db.query(models.Goal).filter(
-        models.Goal.id == goal_id
+    goal = db.query(Goal).filter(
+        Goal.id == goal_id,
+        Goal.owner_id == current_user.id
     ).first()
+
     if goal is None:
         raise HTTPException(
             status_code=404,
             detail="Goal not found"
         )
+
+    if goal_data.title is not None:
+        goal.title = goal_data.title
+
+    if goal_data.completed is not None:
+        goal.completed = goal_data.completed
+
+    db.commit()
+    db.refresh(goal)
+
+    return goal
+@router.delete("/{goal_id}")
+def delete_goal(
+    goal_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    goal = db.query(Goal).filter(
+        Goal.id == goal_id,
+        Goal.owner_id == current_user.id
+    ).first()
+
+    if goal is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Goal not found"
+        )
+
     db.delete(goal)
     db.commit()
-    return {"message": "Goal deleted successfully"}
+
+    return {"message": "Goal deleted"}

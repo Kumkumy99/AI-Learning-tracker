@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from .. models import User
 from ..schemas import UserCreate,UserResponse,UserLogin,Token
-from .. auth import hash_password,verify_password,create_access_token,get_current_user
+from .. auth import hash_password,verify_password,create_access_token,get_current_user,require_admin
 router = APIRouter(
     tags=["Users"]
 )
@@ -52,6 +52,9 @@ def login(
         "token_type": "bearer"
     }
 
-@router.get("/me",response_model=UserResponse)
-def read_me(current_user: User = Depends(get_current_user)):
-    return current_user
+@router.get("/users")
+def get_all_users(
+    admin = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    return db.query(User).all()
