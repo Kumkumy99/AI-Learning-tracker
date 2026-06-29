@@ -1,12 +1,19 @@
-from sqlalchemy import Column, Integer, String, Boolean,ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean,ForeignKey,Date,DateTime
 from .database import Base
+from datetime import datetime
 
 class Goal(Base):
     __tablename__ = "goals"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
-    completed = Column(Boolean, default=False)
+    description = Column(String, nullable=True)
+    target_date = Column(Date, nullable=True)
+    status = Column(String, default="active")
+    progress = Column(Integer, default=0)
     owner_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    
 class User(Base):
     __tablename__="users"
     id = Column(Integer, primary_key=True, index=True)

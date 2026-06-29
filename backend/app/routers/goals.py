@@ -34,13 +34,26 @@ def get_goals(db: Session = Depends(get_db),
 
 
 @router.get("/{goal_id}", response_model=GoalResponse)
-def get_goal(goal_id: int, db: Session = Depends(get_db)):
-    goal = db.query(models.Goal).filter(models.Goal.id == goal_id).first()
+def get_goal(
+    goal_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    goal = db.query(Goal).filter(
+        Goal.id == goal_id,
+        Goal.owner_id == current_user.id
+    ).first()
+
     if goal is None:
-        raise HTTPException(status_code=404, detail="Goal not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Goal not found"
+        )
+
+    return goal
     
 
-@router.patch("/{goal_id}")
+@router.patch("/{goal_id}", response_model=GoalResponse)
 def update_goal(
     goal_id: int,
     goal_data: GoalUpdate,
@@ -51,16 +64,16 @@ def update_goal(
         Goal.id == goal_id,
         Goal.owner_id == current_user.id
     ).first()
+
     if goal is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Goal not found"
-        )
+        raise HTTPException(404, "Goal not found")
+
     if goal_data.title is not None:
         goal.title = goal_data.title
 
     if goal_data.completed is not None:
         goal.completed = goal_data.completed
+
     db.commit()
     db.refresh(goal)
     return goal
