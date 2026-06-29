@@ -1,4 +1,6 @@
 from pydantic import BaseModel,ConfigDict,EmailStr
-from sqlalchemy import Date
-from datetime import datetime,date
-from typing import Optional
+ 
+class GenerateRoadmapRequest(BaseModel):
+    skill_level: str
+    daily_hours: int
+    learning_style: str
