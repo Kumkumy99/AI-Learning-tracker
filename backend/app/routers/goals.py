@@ -15,24 +15,31 @@ def create_goal(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    db_goal = models.Goal(
+    db_goal = Goal(
         title=goal.title,
-        completed=goal.completed,
+        completed=False,
         owner_id=current_user.id
     )
     db.add(db_goal)
     db.commit()
     db.refresh(db_goal)
     return db_goal
+
+
 @router.get("/", response_model=list[GoalResponse])
-def get_goals(db: Session = Depends(get_db)):
-    goals = db.query(models.Goal).all()
+def get_goals(db: Session = Depends(get_db),
+              current_user=Depends(get_current_user)):
+    goals = db.query(Goal).filter(Goal.owner_id==current_user.id).all()
     return goals
+
+
 @router.get("/{goal_id}", response_model=GoalResponse)
 def get_goal(goal_id: int, db: Session = Depends(get_db)):
     goal = db.query(models.Goal).filter(models.Goal.id == goal_id).first()
     if goal is None:
         raise HTTPException(status_code=404, detail="Goal not found")
+    
+
 @router.patch("/{goal_id}")
 def update_goal(
     goal_id: int,
@@ -44,23 +51,21 @@ def update_goal(
         Goal.id == goal_id,
         Goal.owner_id == current_user.id
     ).first()
-
     if goal is None:
         raise HTTPException(
             status_code=404,
             detail="Goal not found"
         )
-
     if goal_data.title is not None:
         goal.title = goal_data.title
 
     if goal_data.completed is not None:
         goal.completed = goal_data.completed
-
     db.commit()
     db.refresh(goal)
-
     return goal
+
+
 @router.delete("/{goal_id}")
 def delete_goal(
     goal_id: int,
@@ -77,8 +82,6 @@ def delete_goal(
             status_code=404,
             detail="Goal not found"
         )
-
     db.delete(goal)
     db.commit()
-
     return {"message": "Goal deleted"}
