@@ -5,6 +5,7 @@ from app.models import Goal, Roadmap, Subtask, Resource
 from app.schemas.ai import GenerateRoadmapRequest
 from app.security import get_current_user
 from app.services.ai_service import generate_roadmap
+from sqlalchemy.orm import relationship
 from app.schemas.ai import FullRoadmapResponse
 
 router = APIRouter(prefix="/ai", tags=["AI"])
