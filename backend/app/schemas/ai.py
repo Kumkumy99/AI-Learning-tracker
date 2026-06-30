@@ -30,3 +30,7 @@ class RoadmapPhaseResponse(BaseModel):
 class FullRoadmapResponse(BaseModel):
     goal_id: int
     phases: list[RoadmapPhaseResponse]
+
+
+class SubtaskUpdate(BaseModel):
+    completed: bool
