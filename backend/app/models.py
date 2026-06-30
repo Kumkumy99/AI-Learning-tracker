@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean,ForeignKey,Date,DateTime
+from sqlalchemy import Column, Integer, String, Boolean,ForeignKey,Date,DateTime,re
 from .database import Base
 from datetime import datetime
+from sqlalchemy.orm import relationship
 
 class Goal(Base):
     __tablename__ = "goals"
@@ -12,6 +13,7 @@ class Goal(Base):
     progress = Column(Integer, default=0)
     owner_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
+    
 
     
 class User(Base):
@@ -21,6 +23,8 @@ class User(Base):
     email=Column(String,nullable=False,unique=True,index=True)
     hashed_password=Column(String,nullable=False)
     role = Column(String, default="user")
+    goals = relationship("Goal", back_populates="owner")
+    roadmaps = relationship("Roadmap", back_populates="goal")
 
 class Roadmap(Base):
     __tablename__ = "roadmaps"
@@ -28,6 +32,10 @@ class Roadmap(Base):
     goal_id = Column(Integer, ForeignKey("goals.id"), nullable=False)
     phase_title = Column(String, nullable=False)
     phase_order = Column(Integer, nullable=False)
+    owner_id = Column(Integer, ForeignKey("users.id"))
+    owner = relationship("User", back_populates="goals")
+    goal = relationship("Goal", back_populates="roadmaps")
+    subtasks = relationship("Subtask", back_populates="roadmap")
 
 class Subtask(Base):
     __tablename__ = "subtasks"
@@ -35,6 +43,8 @@ class Subtask(Base):
     roadmap_id = Column(Integer, ForeignKey("roadmaps.id"), nullable=False)
     title = Column(String, nullable=False)
     completed = Column(Boolean, default=False)
+    roadmap = relationship("Roadmap", back_populates="subtasks")
+    resources = relationship("Resource", back_populates="subtask")
 
 class Resource(Base):
     __tablename__ = "resources"
@@ -43,3 +53,4 @@ class Resource(Base):
     title = Column(String, nullable=False)
     url = Column(String, nullable=False)
     resource_type = Column(String, nullable=True)
+    subtask = relationship("Subtask", back_populates="resources")
