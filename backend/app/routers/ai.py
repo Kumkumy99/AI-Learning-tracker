@@ -10,7 +10,6 @@ from app.schemas.ai import FullRoadmapResponse
 
 router = APIRouter(prefix="/ai", tags=["AI"])
 
-
 @router.post("/goals/{goal_id}/generate-roadmap")
 def create_ai_roadmap(
     goal_id: int,
@@ -28,43 +27,49 @@ def create_ai_roadmap(
             status_code=404,
             detail="Goal not found"
         )
-
     roadmap_data = generate_roadmap(goal, ai_input)
-
-    for phase_index, phase in enumerate(
-        roadmap_data["phases"],
-        start=1
-    ):
-        new_phase = Roadmap(
-            goal_id=goal.id,
-            phase_title=phase["phase_title"],
-            phase_order=phase_index
-        )
-
-        db.add(new_phase)
-        db.flush()
-
-        for subtask in phase["subtasks"]:
-            new_subtask = Subtask(
-                roadmap_id=new_phase.id,
-                title=subtask["title"],
-                completed=False
+    try:
+        for phase_index, phase in enumerate(
+            roadmap_data["phases"],
+            start=1
+        ):
+            new_phase = Roadmap(
+                goal_id=goal.id,
+                phase_title=phase["phase_title"],
+                phase_order=phase_index
             )
 
-            db.add(new_subtask)
+            db.add(new_phase)
             db.flush()
 
-            for resource in subtask["resources"]:
-                new_resource = Resource(
-                    subtask_id=new_subtask.id,
-                    title=resource["title"],
-                    url=resource["url"],
-                    resource_type=resource["resource_type"]
+            for subtask in phase["subtasks"]:
+                new_subtask = Subtask(
+                    roadmap_id=new_phase.id,
+                    title=subtask["title"],
+                    completed=False
                 )
 
-                db.add(new_resource)
+                db.add(new_subtask)
+                db.flush()
 
-    db.commit()
+                for resource in subtask["resources"]:
+                    new_resource = Resource(
+                        subtask_id=new_subtask.id,
+                        title=resource["title"],
+                        url=resource["url"],
+                        resource_type=resource["resource_type"]
+                    )
+
+                    db.add(new_resource)
+
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to save roadmap"
+        )
+
     return roadmap_data
 
 
@@ -88,51 +93,37 @@ def get_roadmap(
             detail="Goal not found"
         )
 
-    phases = db.query(Roadmap).filter(
-        Roadmap.goal_id == goal_id
-    ).order_by(Roadmap.phase_order).all()
+    phases_data = []
 
-    result = {
-        "goal_id": goal_id,
-        "phases": []
-    }
+    for phase in goal.roadmaps:
+        subtasks_data = []
 
-    for phase in phases:
-        phase_data = {
-            "id": phase.id,
-            "phase_title": phase.phase_title,
-            "phase_order": phase.phase_order,
-            "subtasks": []
-        }
+        for subtask in phase.subtasks:
+            resources_data = []
 
-        subtasks = db.query(Subtask).filter(
-            Subtask.roadmap_id == phase.id
-        ).all()
-
-        for subtask in subtasks:
-            resources = db.query(Resource).filter(
-                Resource.subtask_id == subtask.id
-            ).all()
-
-            resource_list = []
-
-            for resource in resources:
-                resource_list.append({
+            for resource in subtask.resources:
+                resources_data.append({
                     "id": resource.id,
                     "title": resource.title,
                     "url": resource.url,
                     "resource_type": resource.resource_type
                 })
 
-            subtask_data = {
+            subtasks_data.append({
                 "id": subtask.id,
                 "title": subtask.title,
                 "completed": subtask.completed,
-                "resources": resource_list
-            }
+                "resources": resources_data
+            })
 
-            phase_data["subtasks"].append(subtask_data)
+        phases_data.append({
+            "id": phase.id,
+            "phase_title": phase.phase_title,
+            "phase_order": phase.phase_order,
+            "subtasks": subtasks_data
+        })
 
-        result["phases"].append(phase_data)
-
-    return result
+    return {
+        "goal_id": goal.id,
+        "phases": phases_data
+    }
