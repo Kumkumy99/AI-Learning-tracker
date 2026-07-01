@@ -1,7 +1,13 @@
 from pydantic import BaseModel,ConfigDict,EmailStr,Field
+from enum import Enum
+
+class SkillLevel(str, Enum):
+    beginner = "beginner"
+    intermediate = "intermediate"
+    advanced = "advanced"
  
 class GenerateRoadmapRequest(BaseModel):
-    skill_level: str
+    skill_level: SkillLevel
     daily_hours: int = Field(gt=0, le=24)
     learning_style: str
 
