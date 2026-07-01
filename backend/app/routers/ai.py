@@ -166,18 +166,15 @@ def update_subtask(
     completed_subtasks = sum(
         1 for task in all_subtasks if task.completed
     )
-
+    
     if total_subtasks == 0:
         progress = 0
     else:
         progress = int(
             (completed_subtasks / total_subtasks) * 100
         )
-
     goal.progress = progress
-
     db.commit()
-
     return {
         "message": "Subtask updated",
         "goal_progress": progress

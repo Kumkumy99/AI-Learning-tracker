@@ -1,10 +1,9 @@
-from pydantic import BaseModel,ConfigDict,EmailStr
+from pydantic import BaseModel,ConfigDict,EmailStr,Field
  
 class GenerateRoadmapRequest(BaseModel):
     skill_level: str
-    daily_hours: int
+    daily_hours: int = Field(gt=0, le=24)
     learning_style: str
-
 
 class ResourceResponse(BaseModel):
     id: int
